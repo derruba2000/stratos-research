@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^poetry init --name stratos-research --python \"\\^3\\.12\" --no-interaction$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

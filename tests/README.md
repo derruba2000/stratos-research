@@ -81,3 +81,59 @@ Tests for `stratos_research.portfolio_config.PortfolioConfig`.
 | `test_json_contains_all_fields` | All seven configuration fields are present with correct values in the JSON output. |
 | `test_json_is_round_trippable` | Parsing the JSON output and passing it back to `PortfolioConfig` produces an equal object. |
 | `test_json_output_is_deterministic` | Calling `get_as_json()` twice on the same instance returns identical strings. |
+
+---
+
+## `test_sqlite_data_engine.py`
+
+Tests for `stratos_research.data_engine.SQLiteDataEngine` and `InMemorySource`.
+
+The suite builds a temporary SQLite database with `securities` and `price_history` tables so the tests stay isolated from the local production-sized database at `/Users/joaoramo/Data/trading_experiment/portfolio_management.sqlite3`.
+
+### `TestLoadDailyPrices` — SQLite extraction and DataFrame formatting
+
+| Test | Description |
+|------|-------------|
+| `test_loads_requested_tickers_inside_date_range` | Confirms only requested symbols and inclusive date-range rows are returned. |
+| `test_returns_pybroker_shaped_columns` | Verifies the output columns are `symbol`, `date`, `open`, `high`, `low`, `close`, and `volume`. |
+| `test_converts_dates_and_numeric_values` | Ensures `date` is converted to a datetime dtype and OHLCV values are numeric floats. |
+| `test_accepts_date_objects` | Confirms `datetime.date` inputs are accepted as well as ISO date strings. |
+| `test_returns_empty_dataframe_with_expected_schema` | Missing tickers return an empty DataFrame with the expected schema. |
+| `test_raises_when_tickers_are_empty` | An empty ticker list raises `ValueError`. |
+| `test_raises_when_end_date_is_before_start_date` | An end date before the start date raises `ValueError`. |
+| `test_raises_when_database_does_not_exist` | A missing SQLite database path raises `FileNotFoundError`. |
+
+### `TestLoadAlignedDailyPrices` — Multi-asset timeline synchronization
+
+| Test | Description |
+|------|-------------|
+| `test_fills_missing_dates_with_last_available_bar` | Expands mixed asset calendars onto a shared daily timeline and forward-fills each ticker from its last known bar. |
+| `test_forward_filled_rows_use_zero_volume` | Synthetic forward-filled rows preserve the last close and set volume to `0.0`. |
+| `test_drops_dates_before_every_requested_symbol_has_prices` | Dates before all requested symbols have at least one known price are excluded from the aligned matrix. |
+| `test_returns_empty_when_any_requested_symbol_never_has_prices` | If any requested ticker has no historical bars, alignment returns an empty DataFrame with the expected schema. |
+
+### `TestCreateInMemorySource` — In-memory source creation
+
+| Test | Description |
+|------|-------------|
+| `test_creates_source_from_aligned_prices_by_default` | Confirms `create_in_memory_source()` wraps an aligned, gap-free price DataFrame by default. |
+| `test_can_create_source_from_unaligned_loaded_prices` | Confirms callers can opt out of timeline alignment and keep raw loaded bars. |
+| `test_source_returns_defensive_dataframe_copy` | Verifies `to_dataframe()` returns a defensive copy rather than exposing mutable internal state. |
+
+### `TestCompatibilityAliases` — UML method aliases
+
+| Test | Description |
+|------|-------------|
+| `test_load_daily_prices_camel_case_alias` | Confirms `loadDailyPrices()` delegates to `load_daily_prices()`. |
+| `test_create_in_memory_source_camel_case_alias` | Confirms `createInMemorySource()` delegates to `create_in_memory_source()`. |
+
+### `TestEnvironmentConfiguration` — `.env` database path loading
+
+| Test | Description |
+|------|-------------|
+| `test_get_sqlite_db_path_reads_existing_environment_variable` | Confirms `SQLITE_DB_PATH` can be read directly from the process environment. |
+| `test_get_sqlite_db_path_loads_dotenv_file` | Confirms `SQLITE_DB_PATH` is loaded from a `.env` file when it is not already set. |
+| `test_load_env_file_does_not_override_existing_value_by_default` | Ensures shell-provided environment values take precedence over `.env` values. |
+| `test_engine_from_env_uses_configured_database_path` | Confirms `SQLiteDataEngine.from_env()` builds an engine from a `.env` file. |
+| `test_engine_constructor_defaults_to_environment_path` | Confirms `SQLiteDataEngine()` uses `SQLITE_DB_PATH` when no explicit database path is provided. |
+| `test_get_sqlite_db_path_raises_when_unconfigured` | Missing environment configuration raises `EnvironmentError`. |

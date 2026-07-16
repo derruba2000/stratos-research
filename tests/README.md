@@ -137,3 +137,27 @@ The suite builds a temporary SQLite database with `securities` and `price_histor
 | `test_engine_from_env_uses_configured_database_path` | Confirms `SQLiteDataEngine.from_env()` builds an engine from a `.env` file. |
 | `test_engine_constructor_defaults_to_environment_path` | Confirms `SQLiteDataEngine()` uses `SQLITE_DB_PATH` when no explicit database path is provided. |
 | `test_get_sqlite_db_path_raises_when_unconfigured` | Missing environment configuration raises `EnvironmentError`. |
+
+---
+
+## `test_pybroker_rebalance_engine.py`
+
+Tests for `stratos_research.pybroker_engine.PyBrokerRebalanceEngine`.
+
+The suite uses synthetic two-symbol OHLCV data so the PyBroker strategy loop and indicator pipeline can be exercised without depending on the local SQLite database.
+
+### `TestIndicatorFunctions` — Momentum indicator calculations
+
+| Test | Description |
+|------|-------------|
+| `test_rsi_indicator_returns_one_value_per_bar` | Confirms the 14-day RSI function returns one value per bar and reaches `100.0` for a strictly rising series. |
+| `test_macd_indicators_return_one_value_per_bar` | Confirms MACD, signal, and histogram arrays are aligned to the input bar count. |
+
+### `TestPyBrokerRebalanceEngine` — PyBroker strategy execution
+
+| Test | Description |
+|------|-------------|
+| `test_register_indicators_creates_rsi_and_macd_pipeline` | Registers RSI, MACD, MACD signal, and MACD histogram indicators. |
+| `test_run_backtest_returns_pybroker_test_result` | Runs PyBroker over an `InMemorySource` and returns a populated `TestResult`. |
+| `test_run_backtest_invokes_after_exec_hook_with_indicators` | Verifies the `set_after_exec` hook receives contexts with finite indicator values after bootstrap. |
+| `test_camel_case_aliases_match_class_diagram` | Confirms `registerIndicators()` and `runBacktest()` delegate to their Pythonic methods. |
